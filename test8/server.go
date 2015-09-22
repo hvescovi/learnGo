@@ -7,29 +7,64 @@ import (
   "os"
   "strconv"
   "bufio"
+  "math/rand"
 )
 
 func main() {
-  server := os.Getenv("KUBERNETES_SERVICE_HOST")
-  port := os.Getenv("KUBERNETES_SERVICE_PORT")
+  //create a server ID
+  serverID := RandStringRunes(5)
+
+  //get the IP and port of the service
+  server := os.Getenv("REPSVC_SERVICE_HOST")
+  port := os.Getenv("REPSVC_SERVICE_PORT")
   ln, _ := net.Listen("tcp", server + ":" + port)
+
+  //create a log file
+  f, _ := os.Create("/tmp/"+serverID)
+  defer f.Close()
+
   for {
+    //get this time
     start := time.Now()
+
+    //wait for conections
     conn, _ := ln.Accept()
-    //var cmd[]byte
-    //fmt.Fscan(conn, &cmd)
+
+    //read the command
     cmd, _ := bufio.NewReader(conn).ReadString('\n')
     s := string(cmd)
+
+    //shutdown the server?
     if s == "shutdown\n" {
-      //fmt.Println("shutdown")
       return
     }
 
     fmt.Print(s," size=")
     fmt.Print(len(s))
     elapsed := time.Since(start).Nanoseconds()
-    //fmt.Println(elapsed)
-    conn.Write([]byte(strconv.Itoa(int(elapsed))))
-    conn.Write([]byte("\n"))
+
+    //prepare the answer
+    answer := "server ID = " + serverID + ", answer = "
+    answer += strconv.Itoa(int(elapsed))
+
+    //log the answer
+    f.WriteString(answer + "\n")
+
+    //send the answer
+    conn.Write([]byte(answer+"\n"))
   }
+}
+
+func init() {
+    rand.Seed(time.Now().UnixNano())
+}
+
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func RandStringRunes(n int) string {
+    b := make([]rune, n)
+    for i := range b {
+        b[i] = letterRunes[rand.Intn(len(letterRunes))]
+    }
+    return string(b)
 }
