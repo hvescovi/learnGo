@@ -1,0 +1,17 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: mypod02
+  labels:
+    name: frontendhttp02
+spec:
+  containers:
+    - name: myfrontend02
+      image: golang:1.4
+      volumeMounts:
+      - mountPath: "/tmp/writehere"
+        name: myvolume02
+  volumes:
+    - name: myvolume02
+      persistentVolumeClaim:
+       claimName: myclaim02
