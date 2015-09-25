@@ -1,0 +1,15 @@
+# test10
+## leader notifying 
+
+Inspired by the last phrases of this link:
+https://github.com/kubernetes/kubernetes/tree/master/examples/guestbook#step-two-fire-up-the-redis-master-service
+
+A leader is a POD running under a service leader, svcleader.
+
+Followers will run in PODs running under a service, called svcslave.
+
+When a follower starts, it will "connect" in the svcleader and will "hear" for updates. Like shared registers, maybe.
+
+
+
+
