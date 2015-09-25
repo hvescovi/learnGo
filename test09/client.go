@@ -16,7 +16,8 @@ func main() {
   }
 
   if len(os.Args) < 3 {
-    fmt.Printf("USAGE: client service_address <command>\n"+
+    fmt.Printf("USAGE: client accessMode ipAddress [port] <command>\n"+
+      "accessMode: direct or port (you only have to specify the port is the 'port' mode)\n"+
       "possible commands:\n"+
       "   add N\n"+
       "   get\n"+
@@ -24,18 +25,32 @@ func main() {
       os.Exit(0)
   }
 
-  //get the server address
-  server := os.Args[1]
+  //access with address or with address:port?
+  accessMode := os.Args[1]
+
+  //if port specified, all parameters increase by 1 in position
+  incParameter := 0
+
+  destiny := ""
+  if accessMode == "direct" {
+    destiny = os.Args[2]
+  } else if accessMode == "port" {
+    destiny = os.Args[2] + ":" + os.Args[3]
+    incParameter = 1
+  }
+
+  //fmt.Println("destiny="+destiny)
 
   //connect
-  conn, err := net.Dial("tcp", server+":8090")
+  conn, err := net.Dial("tcp", destiny)
   Check(err)
 
-  //send the command
-  cmd := os.Args[2]
+  //mount the command
+  cmd := os.Args[3+incParameter]
+  //fmt.Println("command to analyse: "+cmd)
   ok := (cmd[:3] == "add" || cmd == "shutdown" || cmd == "get")
   if cmd[:3] == "add" {
-    cmd += " " + os.Args[3]
+    cmd += " " + os.Args[4+incParameter]
   }
 
   if ok {

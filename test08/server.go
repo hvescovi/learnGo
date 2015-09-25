@@ -12,22 +12,33 @@ import (
 
 func main() {
   //create a server ID
-  serverID := "master"
+  serverID := RandStringRunes(5)
 
-  //define which port it will listen
-  port:= "8091"
+  //get the IP and port of the service
+  //server := os.Getenv("REPSVC_SERVICE_HOST")
 
-  //create the port listener
+  //server := "127.0.0.1"
+
+  //if len(server) < 1 {
+  //  fmt.Printf("REPSVC_SERVICE_HOST not found, it could be missing in the environment variables definition\n")
+  //  return
+  //}
+  //port := os.Getenv("REPSVC_SERVICE_PORT")
+  port:= "8090"
+  //if len(port) < 1 {
+  //  fmt.Printf("REPSVC_SERVICE_PORT not found, it could be missing in the environment variables definition\n")
+  //  return
+  //}
   ln, _ := net.Listen("tcp", ":" + port)
 
   //create a log file
   f, _ := os.Create("/tmp/"+serverID)
   defer f.Close()
 
-  //create the SHARED counter!
-  counter := 0
-
   for {
+    //get this time
+    start := time.Now()
+
     //wait for conections
     conn, _ := ln.Accept()
 
@@ -35,51 +46,24 @@ func main() {
     cmd, _ := bufio.NewReader(conn).ReadString('\n')
     s := string(cmd)
 
-    //log the command
-    f.WriteString(cmd)
-
     //shutdown the server?
     if s == "shutdown\n" {
       return
     }
 
+    fmt.Print(s," size=")
+    fmt.Print(len(s))
+    elapsed := time.Since(start).Nanoseconds()
+
     //prepare the answer
     answer := "server ID = " + serverID + ", answer = "
+    answer += strconv.Itoa(int(elapsed))
 
-    //for debugging, show the command
-    fmt.Print("size of commando:",len(s))
-    fmt.Print(", command: ",s)
-
-    if s[:3] == "add" {
-      //get the number to be incremented
-      n := s[4:len(s)-1]
-      //fmt.Print(" N = ",n)
-      answer += "add" + " " + n
-
-      //debug
-      fmt.Println("answer="+answer)
-
-      //inc the counter!
-      i,err := strconv.Atoi(n)
-      Check(err)
-
-      //increment the counter!
-      counter += i
-
-    } else if s[:3] == "get" {
-      s := strconv.Itoa(counter)
-      answer += s
-    }
+    //log the answer
+    f.WriteString(answer + "\n")
 
     //send the answer
     conn.Write([]byte(answer+"\n"))
-  }
-}
-
-func Check(err error) {
-  if err!=nil {
-    fmt.Println("ERROR: ", err)
-    os.Exit(0)
   }
 }
 

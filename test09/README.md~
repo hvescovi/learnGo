@@ -1,23 +1,17 @@
-# test9
-## services, in PODs, with slaves
+#test09
+## one master and clients
 
-A leader is a POD running under a service leader, svcleader.
+A leader is a POD running under a service leader. The image is **hvescovi/mastersvc**
 
-Slaves will run in PODs running under a service slave, called svcslave.
+Some executions examples:
 
-When a slave starts, it will "connect" in the svcleader and will "hear" for updates. Like shared registers, maybe.
+./client port 10.245.1.3 30761 add 1
+server ID = master, answer = add 1
+./client port 10.245.1.3 30761 get
+server ID = master, answer = 1
+./client port 10.245.1.3 30761 add 5
+server ID = master, answer = add 5
+./client port 10.245.1.3 30761 get
+server ID = master, answer = 6
 
-
-
-
-===
-
-*old*
-
-When a server receive a request, it executes it and look for another replicas. If another replicas were found, the server asks these servers to also run the request.
-
-Each time a server receives a requests, it searches for another replicas. At that moment the view of the group can change, on the view point of a server.
-
-**All** replicas are required to answer: the server who contacts the others replicas will wait for that.
-
-*Maybe it is possible the application (server) asks kubernetes how many replicas of the application are running. This could make easier the discovery of the group.
+By default, the master runs on port 8091, but using kubernetes in 
