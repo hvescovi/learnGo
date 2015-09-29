@@ -10,7 +10,7 @@ import (
 )
 
 const DEBUG = true // if true, print debug messages
-const DEVMODE = false //false: deploy in kubernetes
+const DEVMODE = false
 
 var (
   requestsPort string

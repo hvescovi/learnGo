@@ -65,15 +65,14 @@ func notifyFollowers(notifyChan chan string) {
       //connect in the follower
       if DEBUG {fmt.Println("connecting to the follower ", name," at "+address)}
       conn, err := net.Dial("tcp", address)
-      if err!=nil {
+      Check(err)
 
-        //send the notification to the follower
-        fmt.Fprintf(conn, newUpdate)
+      //send the notification to the follower
+      fmt.Fprintf(conn, newUpdate)
 
-        //close the connection
-        if DEBUG {fmt.Println("notification sent, closing connection")}
-        conn.Close()
-      }
+      //close the connection
+      if DEBUG {fmt.Println("notification sent, closing connection")}
+      conn.Close()
     }
   }
 }
@@ -129,7 +128,7 @@ func listenRequests(notifyChan chan string, localWg *sync.WaitGroup) {
       if DEBUG {fmt.Print("size of commando:",len(s))}
       if DEBUG {fmt.Print(", command: ",s)}
 
-      if cc1 {
+      if s[:3] == "add" {
         //get the number to be incremented
         n := s[4:len(s)-1]
         //fmt.Print(" N = ",n)
@@ -155,7 +154,7 @@ func listenRequests(notifyChan chan string, localWg *sync.WaitGroup) {
         notifyChan <- followerCommand
         if DEBUG {fmt.Println("the new value was sent via channel to the thread that deals with followers")}
 
-      } else if cc2 {
+      } else if s[:3] == "get" {
         s := strconv.Itoa(counter)
         answer += s
       }
