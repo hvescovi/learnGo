@@ -65,15 +65,15 @@ func notifyFollowers(notifyChan chan string) {
       //connect in the follower
       if DEBUG {fmt.Println("connecting to the follower ", name," at "+address)}
       conn, err := net.Dial("tcp", address)
-      if err!=nil {
 
+      if err!=nil {
         //send the notification to the follower
         fmt.Fprintf(conn, newUpdate)
 
         //close the connection
         if DEBUG {fmt.Println("notification sent, closing connection")}
         conn.Close()
-      }
+      } // ELSE SHOULD THROUGH OUT THIS FOLLOWER
     }
   }
 }

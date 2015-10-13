@@ -9,7 +9,7 @@ import (
   "strings"
 )
 
-const DEBUG = true // if true, print debug messages
+const DEBUG = false // if true, print debug messages
 const DEVMODE = false //false: deploy in kubernetes
 
 var (
@@ -26,8 +26,8 @@ func main() {
   values = make(map[string]string)
 
   //create a log file
-  f, _ := os.Create("/tmp/test13follower-ip"+getMyIP())
-  defer f.Close()
+  //f, _ := os.Create("/tmp/test13follower-ip"+getMyIP())
+  //defer f.Close()
 
   //define which port the FOLLOWER will listen
   requestsPort = "8092"
@@ -74,14 +74,14 @@ func main() {
     destiny = leaderServiceAddress + ":" + leaderServicePort
 
     //log the retrieved values
-    f.WriteString("host IP of leader in environment variables: "+leaderServiceAddress+":"+leaderServicePort)
+    //f.WriteString("host IP of leader in environment variables: "+leaderServiceAddress+":"+leaderServicePort)
   }
 
   if DEBUG {fmt.Println("destiny="+destiny)}
 
   //connect
   conn, err := net.Dial("tcp", destiny)
-  Check(err)
+  Check(err) //this will restart the container
 
   //get the IP and PORT of this (introspect?)
   myAddress := getMyIP() + ":" + requestsPort
