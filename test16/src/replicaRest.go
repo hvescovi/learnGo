@@ -24,6 +24,7 @@ var (
 	idx          int
 	myIP         string
 	queue        map[string]string
+	ordered      map[string]string
 )
 
 func main() {
@@ -39,10 +40,10 @@ func main() {
 	requestsPort = "7500"
 
 	retrieveQueueOfRequestsFromEtcd()
+	retrieveOrderedRequestsFromEtcd()
 
 	//listen requests
 	http.HandleFunc("/", defaultHandler)
-
 	http.ListenAndServe(":"+requestsPort, nil)
 }
 
@@ -69,10 +70,34 @@ func retrieveQueueOfRequestsFromEtcd() {
 
 		myOps := client.GetOptions{Recursive: true, Sort: true}
 		resp, err := kapi.Get(context.Background(), "/apprequests/", &myOps)
+
+		//failed to read of create-and-read from etcd?
+		failed := false
+		created := false
+
 		if err != nil {
+			created = true
 			saveMessage("erro ao guardar no store etcd")
-			saveMessage(err.Error())
-		} else {
+			se := err.Error()
+			fmt.Println(se)
+			//fmt.Println(se[1:4])
+			if se[0:3] == "100" { //key not found
+				//create the key
+				createOps := client.SetOptions{Dir: true}
+				respCreate, err := kapi.Set(context.Background(), "/apprequests/", "", &createOps)
+				if err != nil {
+					saveMessage("problem creating queue of requests: ")
+					saveMessage(err.Error())
+					failed = true
+				} else {
+					saveMessage("queue of Requests created sucessfully")
+					saveMessage(respCreate.Node.Value)
+				}
+			}
+		}
+
+		if !created && !failed { //only enters if not failed and was not recently created
+
 			saveMessage("let's read the queue")
 
 			//load the queue
@@ -83,12 +108,87 @@ func retrieveQueueOfRequestsFromEtcd() {
 			for _, node := range all {
 
 				//fmt.Println(node.Key, "=", node.Value)
+				// /apprequests/00000000000000037553 = 192.168.15.100,godzila
 				parts := strings.Split(node.Key, "/")
 				fmt.Println(parts[2], "=", node.Value)
 				queue[parts[2]] = node.Value
 			}
-
 			saveMessage("queue readed")
+		}
+	}
+}
+
+func retrieveOrderedRequestsFromEtcd() {
+
+	//create the queue memory structure
+	ordered = make(map[string]string)
+
+	//put the command in the queue of etcd
+	cfg := client.Config{
+		Endpoints: []string{"http://192.168.15.100:4001"},
+		Transport: client.DefaultTransport,
+		// set timeout per request to fail fast when the target endpoint is unavailable
+		HeaderTimeoutPerRequest: time.Second,
+	}
+	c, err := client.New(cfg)
+	if err != nil {
+		saveMessage("erro ao criar cliente do etcd")
+	} else {
+		saveMessage("client of etcd created! (for reading executedRequests)")
+		kapi := client.NewKeysAPI(c)
+
+		saveMessage("API ready to be called (for reading executedRequests)")
+
+		myOps := client.GetOptions{Recursive: true, Sort: true}
+		resp, err := kapi.Get(context.Background(), "/apporderedrequests/", &myOps)
+
+		//failed to read of create-and-read from etcd?
+		failed := false
+		created := false
+
+		if err != nil {
+			created = true
+			saveMessage("erro ao guardar no store etcd")
+			se := err.Error()
+			fmt.Println(se)
+			//fmt.Println(se[1:4])
+			if se[0:3] == "100" { //key not found
+				//create the key
+				createOps := client.SetOptions{Dir: true}
+				respCreate, err := kapi.Set(context.Background(), "/apporderedrequests/", "", &createOps)
+				if err != nil {
+					saveMessage("problem creating orderedrequests: ")
+					saveMessage(err.Error())
+					failed = true
+				} else {
+					saveMessage("orderedRequests created sucessfully")
+					saveMessage(respCreate.Node.Value)
+				}
+			}
+		}
+
+		if !created && !failed { //only enters if not failed and was not recently created
+
+			saveMessage("let's read the ordered requests")
+
+			//load the queue
+			//fmt.Println("value: ", resp.Node.Value)
+			//fmt.Println("action: ", resp.Action)
+			all := resp.Node.Nodes
+			//fmt.Println("how many children: ", all.Len())
+			for _, node := range all {
+				//fmt.Println(node.Key, "=", node.Value)
+				// /apporderedrequests/1 = 18.16.32.16,18.16.51.2,R0C0
+
+				parts := strings.Split(node.Key, "/")
+				fmt.Println(parts[2], "=", node.Value)
+				ordered[parts[2]] = node.Value
+			}
+			saveMessage("ordered requests readed")
+		} else {
+			if failed {
+				saveMessage("failed to create or create-and-read from etcd/ordered requests")
+			}
 		}
 	}
 }

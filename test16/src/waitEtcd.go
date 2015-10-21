@@ -39,6 +39,12 @@ func main() {
 		}
 		action := r.Action
 		fmt.Println("action: ", action)
+		fmt.Println("node key: ", r.Node.Key)
+		fmt.Println("node value: ", r.Node.Value)
+		//action: create
+		//node key:  /apprequests/00000000000000040042
+		//node value:  192.168.15.100,reqX
+
 	}
 
 	//if err != nil {
